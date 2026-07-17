@@ -91,19 +91,16 @@ public class uva10443 {
                     for (int k2 = 0; k2 < c; k2++) {
 
                         matrix_copy[k][k2] = win(matrix, k, k2, r, c);
-
-                        /*                         *
-                         * 1oe acceso a la posicion matrix_copy[k][k2]
-                         * 1oe asignacion
-                         * 66oe por win
+                        /*
+                         * win(...) = 71oe
                          *
-                         * Total:
+                         * Segun el criterio usado en la tabla,
+                         * el costo adoptado para esta instruccion
+                         * es 71oe.
                          *
-                         * 68oe
+                         * Como 71 es constante:
                          *
-                         * Sin embargo, 68 es una constante:
-                         *
-                         * O(68) = O(1)
+                         * O(71) = O(1)
                          */
                     }
                 }
@@ -111,9 +108,28 @@ public class uva10443 {
                 matrix = matrix_copy;
                 // 1oe asignacion de referencia
             }
-
             /*
-             * Complejidad de la simulacion:
+             * Costo del ciclo de columnas:
+             *
+             * 1 + c(1 + 71 + 2) + 1
+             * = 74c + 2
+             *
+             * Costo del ciclo de filas:
+             *
+             * 1 + r(1 + (71c + 2) + 2) + 1
+             * = 71rc + 5r + 2
+             *
+             * Costo de un dia:
+             *
+             * 2 + (71rc + 5r + 2) + 1
+             * = 71rc + 5r + 5
+             *
+             * Costo de los d dias:
+             *
+             * 1 + d(1 + 71rc + 5r + 5 + 2) + 1
+             * = 71drc + 5dr + 8d + 2
+             *
+             * Complejidad:
              *
              * O(d * r * c)
              */
@@ -154,50 +170,43 @@ public class uva10443 {
 
                 System.out.println(); // 1oe
             }
-
             /*
-             * Complejidad total por caso:
+             * Costo total por caso:
              *
-             * Lectura:
-             * O(r * c)
+             * T(caso) = Tinicial + Tlectura + Tdias + Tsalida
              *
-             * Simulacion:
-             * O(d * r * c)
+             * T(caso) =
+             * 8
+             * + (5rc + 7r + 2)
+             * + (71drc + 5dr + 8d + 2)
+             * + (5rc + 6r + 2)
              *
-             * Impresion:
-             * O(r * c)
+             * T(caso) =
+             * 71drc + 10rc + 5dr + 13r + 8d + 14
              *
-             * Sumando:
+             * El termino dominante es:
              *
-             * T(r,c,d) =
-             * O(r*c) + O(d*r*c) + O(r*c)
+             * 71drc
              *
-             * T(r,c,d) =
-             * O(2*r*c + d*r*c)
-             *
-             * Factorizando:
-             *
-             * T(r,c,d) =
-             * O(r*c*(d + 2))
-             *
+             * Por tanto:
              *
              * O(d * r * c)
              */
         }
-
         /*
-         * Complejidad total para t casos:
+         * Costo total para t casos:
          *
-         * O(t * (r*c + d*r*c + r*c))
+         * 2 + 1 + t(1 + Tcaso + 2) + 1
          *
-         * O(t * r*c*(d + 2))
+         * = 4 + t(Tcaso + 3)
          *
+         * Por tanto:
          *
          * O(t * d * r * c)
          *
-         * Esta expresión supone que todos los casos
+         * Esta expresion supone que todos los casos
          * tienen aproximadamente los mismos valores
-         * máximos de r, c y d.
+         * de r, c y d.
          */
 
         sc.close(); // 1oe
@@ -291,65 +300,71 @@ public class uva10443 {
 
                     return 'P'; // 1oe
                 }
-
                 /*
-                 * Costo del cuerpo cuando la condición es falsa:
+                 * Costo del cuerpo cuando la condicion es falsa:
                  *
                  * 3oe + 3oe + 6oe
                  *
                  * Total:
                  *
-                 * 12oe por iteración
+                 * 12oe por iteracion
+                 *
+                 * Si la condicion es verdadera:
+                 *
+                 * 12oe + 1oe del return
+                 *
+                 * Total:
+                 *
+                 * 13oe por iteracion
+                 *
+                 * Para el calculo adoptado en la tabla
+                 * se usa 13oe como costo del cuerpo.
                  */
             }
-
             /*
+             * T(for) =
              *
-             * T(n) =
-             * 1oe
-             * + 1oe
-             * + sumatoria desde k=1 hasta 4
-             *   de (12oe + 1oe + 2oe)
+             * 1oe + sumatoria desde k=1 hasta 4
+             * de (13oe + 1oe + 2oe) + 1oe
              *
              * Donde:
              *
-             * 1oe inicial:
-             * int k = 0
+             * 1oe:
+             * inicializacion int k = 0
              *
-             * 1oe final:
-             * última comparación falsa k < 4
-             *
-             * 12oe:
+             * 13oe:
              * cuerpo del ciclo
              *
              * 1oe:
-             * comparación verdadera k < 4
+             * comparacion verdadera k < 4
              *
              * 2oe:
-             * actualización k = k + 1
+             * incremento k = k + 1
              *
-             * T(n) =
-             * 1 + 1 + sumatoria de 15oe, cuatro veces
+             * 1oe:
+             * comparacion final falsa k < 4
              *
-             * T(n) =
-             * 2 + 4(15)
+             * T(for) =
+             * 1 + 4(16) + 1
              *
-             * T(n) =
-             * 62oe
+             * T(for) =
+             * 66oe
              */
 
             return 'R'; // 1oe
-
             /*
-             * Costo aproximado del caso R:
+             * Costo del caso R:
              *
-             * 2oe condición inicial
-             * + 62oe ciclo
+             * 2oe condicion inicial
+             * + 66oe ciclo completo
              * + 1oe return
              *
              * Total:
              *
-             * 65oe
+             * 69oe
+             *
+             * Los arreglos di y dj se suman despues
+             * al calcular el costo total de win.
              */
         }
 
@@ -397,5 +412,22 @@ public class uva10443 {
         }
 
         return 'P'; // 1oe
+
+        /*
+         * Costo total del metodo win:
+         *
+         * T(win) = 1oe + 1oe + max(TR, TS, TP)
+         *
+         * T(win) = 1 + 1 + 69
+         *
+         * T(win) = 71oe
+         *
+         * Aplicando Big O:
+         *
+         * O(71) = O(1)
+         *
+         * La complejidad es constante porque
+         * se revisan como maximo cuatro vecinos.
+         */
     }
 }

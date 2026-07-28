@@ -23,8 +23,13 @@ public class bubbleSort {
     }
 
     public static void main(String[] args) {
+        System.out.println("----bubbleSortOptimized----");
+        int arrInt[] = { 4, 5, 8, 7, 9, 1, 2, 100 };
+        bubbleSortOptimized(arrInt);
+        printArray(arrInt);
+        System.out.println("-----");
+
         /*
-         * int arr[] = { 4, 5, 8, 7, 9, 1, 2, 0 };
          * int n = arr.length;
          * for (int i = 0; i < n; i++) {
          * for (int j = 0; j < n - i - 1; j++) {
@@ -67,6 +72,24 @@ public class bubbleSort {
 
         for (int i = 0; i < arr.length; i++) {
             arr[i].printPerson();
+        }
+    }
+
+    public static void bubbleSortOptimized(int arr[]) {
+        int n = arr.length;
+        boolean swapped = true;
+
+        while (swapped) {
+            swapped = false;
+            for (int i = 1; i < n; i++) {
+                if (arr[i - 1] > arr[i]) {
+                    int tmp = arr[i];
+                    arr[i] = arr[i- 1];
+                    arr[i- 1] = tmp;
+                    swapped = true;
+                }
+            }
+            n--;
         }
     }
 }

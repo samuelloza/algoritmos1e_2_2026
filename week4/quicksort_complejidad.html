@@ -1,0 +1,156 @@
+
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Sustitución paso a paso</title>
+  <style>
+    :root{--bg:#f5f7fb;--panel:#fff;--text:#182230;--muted:#667085;--border:#d0d5dd;--blue:#2563eb;--blue-soft:#dbeafe;--green:#15803d;--green-soft:#dcfce7;--orange:#c2410c;--orange-soft:#ffedd5;--purple:#7c3aed}
+    *{box-sizing:border-box} body{margin:0;font-family:Arial,sans-serif;background:var(--bg);color:var(--text)}
+    main{width:calc(100% - 20px);max-width:1200px;margin:14px auto 30px} h1,h2,p{margin-top:0} h1{margin-bottom:6px}
+    .intro{color:var(--muted);line-height:1.5;margin-bottom:14px}.panel{background:var(--panel);border:1px solid var(--border);border-radius:14px;padding:16px;margin-bottom:14px}
+    .controls{position:sticky;top:8px;z-index:10;display:flex;flex-wrap:wrap;align-items:center;gap:8px;box-shadow:0 4px 16px rgba(15,23,42,.08)}
+    button{border:1px solid var(--border);background:white;color:var(--text);padding:10px 14px;border-radius:10px;font-size:15px;cursor:pointer}button.primary{background:var(--blue);border-color:var(--blue);color:white}button:disabled{opacity:.45;cursor:not-allowed}
+    input[type=range]{flex:1;min-width:220px}.badge{display:inline-block;padding:5px 10px;border-radius:999px;background:var(--blue);color:white;font-size:12px;font-weight:bold;margin-bottom:8px}
+    .step-box{border-left:5px solid var(--blue);background:var(--blue-soft);border-radius:10px;padding:14px 16px;margin-bottom:14px}
+    .formula{font-family:Consolas,Monaco,monospace;font-size:22px;line-height:1.8;text-align:center;padding:18px;border-radius:12px;border:1px solid var(--border);background:#f8fafc;overflow-x:auto}
+    .blue-box,.green-box,.orange-box{display:inline-block;border-radius:8px;padding:2px 7px;font-weight:bold;border:2px solid}.blue-box{color:var(--blue);background:var(--blue-soft);border-color:var(--blue)}.green-box{color:var(--green);background:var(--green-soft);border-color:var(--green)}.orange-box{color:var(--orange);background:var(--orange-soft);border-color:var(--orange)}
+    .purple{color:var(--purple);font-weight:bold}.arrow{text-align:center;font-size:36px;color:var(--purple);margin:8px 0}.grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}.mini-card{border:1px solid var(--border);border-radius:10px;padding:12px;background:white}.mini-card strong{display:block;margin-bottom:5px}.rule{border-left:4px solid var(--orange);background:var(--orange-soft);border-radius:8px;padding:12px;line-height:1.5}.result{border-left:5px solid var(--green);background:var(--green-soft);border-radius:10px;padding:14px 16px;font-size:18px;font-weight:bold}
+
+    .math-view {
+      font-family: "Cambria Math", "STIX Two Math", Georgia, serif;
+      font-size: 1.08em;
+    }
+    .frac {
+      display: inline-flex;
+      flex-direction: column;
+      align-items: center;
+      vertical-align: middle;
+      line-height: 1;
+      margin: 0 .12em;
+    }
+    .frac > .num {
+      padding: 0 .2em .1em;
+      border-bottom: 1.5px solid currentColor;
+    }
+    .frac > .den {
+      padding: .1em .28em 0;
+      white-space: nowrap;
+    }
+
+    .frac sup {
+      font-size: .72em;
+      line-height: 0;
+      vertical-align: .55em;
+    }
+    .nested-frac {
+      font-size: .92em;
+    }
+
+    @media(max-width:750px){.grid{grid-template-columns:1fr}.formula{font-size:18px}}
+  </style>
+</head>
+<body>
+<main>
+  <h1>Sustitución en una recurrencia</h1>
+  <p class="intro">La idea principal es reemplazar una llamada completa como <strong>T(n/2)</strong>, no solamente el valor que está dentro del paréntesis.</p>
+
+  <section class="panel controls">
+    <button id="prev">Anterior</button>
+    <button id="next" class="primary">Siguiente</button>
+    <input id="range" type="range" min="0" max="0" value="0">
+  </section>
+
+  <section class="step-box">
+    <div id="badge" class="badge"></div>
+    <h2 id="title"></h2>
+    <p id="message"></p>
+  </section>
+
+  <section class="panel"><div id="formula" class="formula"></div></section>
+
+  <section class="grid">
+    <div class="panel"><h2>Qué se reemplaza</h2><div id="replaceInfo" class="mini-card"></div></div>
+    <div class="panel"><h2>Qué se mantiene</h2><div id="keepInfo" class="mini-card"></div></div>
+  </section>
+
+  <section class="panel"><h2>Regla usada</h2><div id="rule" class="rule"></div></section>
+  <section class="panel"><h2>Resultado acumulado</h2><div id="result" class="result"></div></section>
+</main>
+<script>
+const steps=[
+{title:'Fórmula original',message:'Primero identificamos la llamada recursiva que está dentro de T(n).',formula:'T(n) = 2 <span class="blue-box">T(n/2)</span> + <span class="orange-box">cn</span>',replace:'<strong>Parte azul:</strong> T(n/2)',keep:'<strong>Parte naranja:</strong> cn',rule:'Todavía no sustituimos. Solo marcamos qué parte se abrirá.',result:'T(n) = 2T(n/2) + cn'},
+{title:'Aplicamos la misma regla a T(n/2)',message:'Ahora el tamaño del problema es n/2. Por eso reemplazamos cada n por n/2.',formula:'<span class="blue-box">T(n/2)</span><div class="arrow">↓</div>2T((n/2)/2) + c(n/2)',replace:'<strong>Se desarrolla:</strong> T(n/2)',keep:'<strong>La fórmula principal:</strong> todavía no cambia',rule:'Usamos T(x) = 2T(x/2) + cx, con x = n/2.',result:'T(n/2) = 2T((n/2)/2) + c(n/2)'},
+{title:'Simplificamos la división',message:'Dividir n/2 otra vez entre 2 produce n/4.',formula:'(n/2)/2 = <span class="purple">n/4</span><br><br><span class="blue-box">T(n/2)</span> = <span class="green-box">2T(n/4) + c(n/2)</span>',replace:'<strong>Parte conocida:</strong> T(n/2)',keep:'<strong>Su contenido completo:</strong> 2T(n/4) + c(n/2)',rule:'(n/2)/2 = n/4',result:'T(n/2) = 2T(n/4) + c(n/2)'},
+{title:'Sustituimos en la fórmula principal',message:'Ahora reemplazamos todo T(n/2), no solamente n/2.',formula:'T(n) = 2 <span class="blue-box">T(n/2)</span> + <span class="orange-box">cn</span><div class="arrow">↓</div>T(n) = 2[<span class="green-box">2T(n/4) + c(n/2)</span>] + <span class="orange-box">cn</span>',replace:'<strong>Sale:</strong> T(n/2)<br><strong>Entra:</strong> 2T(n/4) + c(n/2)',keep:'<strong>Se mantiene igual:</strong> el 2 externo y el + cn',rule:'Si A = B, entonces donde aparece A podemos colocar B.',result:'T(n) = 2[2T(n/4) + c(n/2)] + cn'},
+{title:'Distribuimos el 2',message:'El 2 de afuera multiplica a todos los términos del corchete.',formula:'T(n) = 2[2T(n/4) + c(n/2)] + cn<br><br>T(n) = <span class="purple">4T(n/4)</span> + 2c(n/2) + cn',replace:'<strong>2 × 2T(n/4):</strong> 4T(n/4)',keep:'<strong>También:</strong> 2 × c(n/2)',rule:'Propiedad distributiva: a(b + c) = ab + ac.',result:'T(n) = 4T(n/4) + 2c(n/2) + cn'},
+{title:'Simplificamos 2c(n/2)',message:'El 2 externo se cancela con el divisor 2.',formula:'2c(n/2) = 2 · c · n/2 = <span class="green-box">cn</span><br><br>T(n) = 4T(n/4) + cn + cn',replace:'<strong>Se simplifica:</strong> 2c(n/2)',keep:'<strong>Se mantiene:</strong> 4T(n/4) y el cn original',rule:'2 × (n/2) = n',result:'T(n) = 4T(n/4) + cn + cn'},
+{title:'Primera sustitución terminada',message:'Sumamos cn + cn.',formula:'T(n) = <span class="green-box">4T(n/4) + 2cn</span>',replace:'<strong>La siguiente llamada a abrir será:</strong> T(n/4)',keep:'<strong>Trabajo acumulado:</strong> 2cn',rule:'cn + cn = 2cn',result:'T(n) = 4T(n/4) + 2cn'},
+{title:'Ahora abrimos T(n/4)',message:'Repetimos exactamente el mismo procedimiento.',formula:'<span class="blue-box">T(n/4)</span><div class="arrow">↓</div><span class="green-box">2T(n/8) + c(n/4)</span>',replace:'<strong>Sale:</strong> T(n/4)<br><strong>Entra:</strong> 2T(n/8) + c(n/4)',keep:'<strong>En la principal se mantiene:</strong> el 4 externo y + 2cn',rule:'Usamos la misma fórmula con x = n/4.',result:'T(n/4) = 2T(n/8) + c(n/4)'},
+{title:'Segunda sustitución',message:'Reemplazamos todo T(n/4) dentro de la fórmula principal.',formula:'T(n) = 4[<span class="green-box">2T(n/8) + c(n/4)</span>] + <span class="orange-box">2cn</span>',replace:'<strong>Se reemplazó:</strong> T(n/4)',keep:'<strong>Se mantiene:</strong> 4 de afuera y + 2cn',rule:'De nuevo entra toda la expresión, no solamente n/8.',result:'T(n) = 4[2T(n/8) + c(n/4)] + 2cn'},
+{title:'Simplificamos otra vez',message:'Distribuimos el 4 y simplificamos 4c(n/4) = cn.',formula:'T(n) = 8T(n/8) + 4c(n/4) + 2cn<br><br>T(n) = 8T(n/8) + cn + 2cn',replace:'<strong>4 × 2T(n/8):</strong> 8T(n/8)',keep:'<strong>4c(n/4):</strong> se convierte en cn',rule:'4 × (n/4) = n',result:'T(n) = 8T(n/8) + 3cn'},
+{title:'Patrón general',message:'Cada sustitución duplica las llamadas, divide el tamaño entre una potencia de 2 y agrega otro cn.',formula:'T(n) = 2T(n/2) + cn<br>T(n) = 4T(n/4) + 2cn<br>T(n) = 8T(n/8) + 3cn<br>T(n) = 16T(n/16) + 4cn',replace:'<strong>Llamadas:</strong> 2, 4, 8, 16, … = 2<sup>k</sup>',keep:'<strong>Trabajo acumulado:</strong> cn, 2cn, 3cn, 4cn, … = kcn',rule:'Después de k sustituciones aparece el patrón general.',result:'<span class="purple">2<sup>k</sup>T(n/2<sup>k</sup>)</span> + <span class="orange-box">kcn</span>'},
+{title:'Paso 1: aplicamos el caso base',message:'Primero indicamos el tamaño mínimo al que debe llegar el subproblema.',formula:'<div class="operation-stack"><div class="operation-card blue-step"><span class="operation-label">Tamaño después de k divisiones</span><span class="math-line">n/2<sup>k</sup></span></div><div class="operation-arrow">↓ igualamos a 1</div><div class="operation-card green-step"><span class="operation-label">Caso base</span><span class="math-line">n/2<sup>k</sup> = 1</span></div></div>',replace:'<strong>Primera operación:</strong> identificar el tamaño después de k divisiones',keep:'<strong>Después:</strong> igualarlo al tamaño mínimo 1',rule:'Este paso no despeja k todavía. Solo aplica el caso base de la recursión.',result:'<span class="green-box">n/2<sup>k</sup> = 1</span>'},
+{title:'Paso 2: despejamos la potencia',message:'Ahora hacemos una operación algebraica diferente: eliminamos el denominador 2ᵏ.',formula:'<div class="operation-stack"><div class="operation-card blue-step"><span class="operation-label">Ecuación inicial</span><span class="math-line">n/2<sup>k</sup> = 1</span></div><div class="operation-arrow">↓ multiplicamos ambos lados por 2<sup>k</sup></div><div class="operation-card"><span class="math-line">(n/2<sup>k</sup>) · 2<sup>k</sup> = 1 · 2<sup>k</sup></span></div><div class="operation-arrow">↓ simplificamos</div><div class="operation-card green-step"><span class="operation-label">Resultado del despeje</span><span class="math-line">n = 2<sup>k</sup></span></div></div>',replace:'<strong>Se multiplica:</strong> ambos lados por 2ᵏ',keep:'<strong>Se simplifica:</strong> 2ᵏ/2ᵏ = 1',rule:'Propiedad de la igualdad: podemos multiplicar ambos lados por la misma cantidad sin cambiar la igualdad.',result:'<span class="green-box">2<sup>k</sup> = n</span>'},
+{title:'Definición de logaritmo',message:'Como k está en el exponente, usamos la definición de logaritmo para despejarlo.',formula:'<span class="math-line"><span class="blue-box">a<sup>b</sup> = c</span></span><span class="arrow">⇔</span><span class="math-line"><span class="green-box">log<sub>a</sub>(c) = b</span></span><span class="math-line">2<sup>k</sup> = n  ⇔  <span class="green-box">log<sub>2</sub>(n) = k</span></span>',replace:'<strong>Base:</strong> a = 2<br><strong>Resultado:</strong> c = n',keep:'<strong>Exponente:</strong> b = k',rule:'Esta propiedad se llama definición de logaritmo: aᵇ = c ⇔ logₐ(c) = b.',result:'<span class="green-box">k = log<sub>2</sub>(n)</span>'},
+{title:'Ejemplo numérico de la propiedad',message:'Con n = 8 podemos comprobar que la conversión no es mágica.',formula:'<span class="math-line">2<sup>k</sup> = 8</span><span class="math-line">2<sup>3</sup> = 8</span><span class="math-line"><span class="green-box">k = 3 = log<sub>2</sub>(8)</span></span>',replace:'<strong>Pregunta del logaritmo:</strong> ¿a qué exponente elevamos 2 para obtener 8?',keep:'<strong>Respuesta:</strong> a 3',rule:'El logaritmo devuelve el exponente.',result:'<span class="green-box">log<sub>2</sub>(8) = 3</span>'},
+{title:'Sustituimos k en la fórmula general',message:'Reemplazamos k por log₂(n) en todos los lugares donde aparece.',formula:'<span class="math-line">T(n) = 2<sup>k</sup>T(n/2<sup>k</sup>) + kcn</span><span class="arrow">↓</span><span class="math-line">T(n) = 2<sup>log₂(n)</sup>T(n/2<sup>log₂(n)</sup>) + cn log<sub>2</sub>(n)</span>',replace:'<strong>Sale:</strong> k',keep:'<strong>Entra:</strong> log₂(n)',rule:'Sustitución algebraica: si k = log₂(n), reemplazamos cada k por log₂(n).',result:'T(n) = 2<sup>log₂(n)</sup>T(n/2<sup>log₂(n)</sup>) + cn log<sub>2</sub>(n)'},
+{title:'Propiedad inversa',message:'Ahora usamos que elevar una base y aplicar logaritmo en esa misma base son operaciones inversas.',formula:'<span class="math-line"><span class="blue-box">a<sup>logₐ(x)</sup> = x</span></span><span class="math-line">2<sup>log₂(n)</sup> = <span class="green-box">n</span></span>',replace:'<strong>Base:</strong> a = 2<br><strong>Argumento:</strong> x = n',keep:'<strong>Resultado:</strong> n',rule:'Se llama propiedad inversa o identidad logarítmica fundamental: a^(logₐ x) = x.',result:'<span class="green-box">2<sup>log₂(n)</sup> = n</span>'},
+{title:'Simplificamos el tamaño interno',message:'La misma propiedad aparece también dentro de T.',formula:'<span class="math-line">T(n/2<sup>log₂(n)</sup>)</span><span class="math-line">2<sup>log₂(n)</sup> = n</span><span class="math-line">T(n/n) = <span class="green-box">T(1)</span></span>',replace:'<strong>Se reemplaza:</strong> 2^(log₂(n)) por n',keep:'<strong>Luego:</strong> n/n = 1',rule:'Usamos la propiedad inversa y después la simplificación de fracciones.',result:'<span class="green-box">T(n/2<sup>log₂(n)</sup>) = T(1)</span>'},
+{title:'Resultado después de aplicar las propiedades',message:'Reemplazamos ambos resultados en la fórmula.',formula:'<span class="math-line">T(n) = nT(1) + cn log<sub>2</sub>(n)</span>',replace:'<strong>2^(log₂ n):</strong> se convierte en n',keep:'<strong>T(n/n):</strong> se convierte en T(1)',rule:'T(1) es el costo del caso base y se considera constante.',result:'T(n) = nT(1) + cn log<sub>2</sub>(n)'}, 
+{title:'Complejidad final',message:'T(1) y c son constantes. El término que más crece es n log n.',formula:'<span class="math-line">T(n) = nT(1) + cn log<sub>2</sub>(n)</span><span class="math-line">T(n) = an + cn log<sub>2</sub>(n)</span><span class="math-line"><span class="final-box">Θ(n log n)</span></span>',replace:'<strong>T(1):</strong> se representa por una constante a',keep:'<strong>Término dominante:</strong> n log n',rule:'Se eliminan constantes y términos de menor crecimiento.',result:'<span class="final-box">T(n) = Θ(n log n)</span>'}
+];
+let index=0;const badge=document.getElementById('badge'),title=document.getElementById('title'),message=document.getElementById('message'),formula=document.getElementById('formula'),replaceInfo=document.getElementById('replaceInfo'),keepInfo=document.getElementById('keepInfo'),rule=document.getElementById('rule'),result=document.getElementById('result'),prev=document.getElementById('prev'),next=document.getElementById('next'),range=document.getElementById('range');range.max=String(steps.length-1);
+
+function frac(num, den, extraClass = '') {
+  return '<span class="frac ' + extraClass + '"><span class="num">' +
+    num + '</span><span class="den">' + den + '</span></span>';
+}
+
+function mathify(value) {
+  if (!value) return value;
+
+  let html = value;
+  const protectedFractions = [];
+
+  function protect(markup) {
+    const token = `@@FRAC_${protectedFractions.length}@@`;
+    protectedFractions.push(markup);
+    return token;
+  }
+
+  // Nested divisions must be replaced first.
+  html = html.replaceAll('((n/2)/2)', '(' + frac(frac('n', '2'), '2', 'nested-frac') + ')');
+  html = html.replaceAll('(n/2)/2', frac(frac('n', '2'), '2', 'nested-frac'));
+  html = html.replaceAll('((n/4)/2)', '(' + frac(frac('n', '4'), '2', 'nested-frac') + ')');
+  html = html.replaceAll('(n/4)/2', frac(frac('n', '4'), '2', 'nested-frac'));
+
+  // Products in denominators used by the board explanation.
+  html = html.replaceAll('n/(2·2)', frac('n', '2·2'));
+  html = html.replaceAll('n/(4·2)', frac('n', '4·2'));
+
+  // Fracciones con exponentes en el denominador.
+  html = html.replaceAll('n/2<sup>log₂(n)</sup>', protect(frac('n', '2<sup>log₂(n)</sup>')));
+  html = html.replaceAll('n/2<sup>k</sup>', protect(frac('n', '2<sup>k</sup>')));
+  html = html.replaceAll('n/2ᵏ', protect(frac('n', '2<sup>k</sup>')));
+
+  // Simple fractions.
+  html = html.replaceAll('n/16', frac('n', '16'));
+  html = html.replaceAll('n/8', frac('n', '8'));
+  html = html.replaceAll('n/4', frac('n', '4'));
+  html = html.replaceAll('n/2', frac('n', '2'));
+  html = html.replaceAll('x/2', frac('x', '2'));
+
+  protectedFractions.forEach((markup, index) => {
+    html = html.replaceAll(`@@FRAC_${index}@@`, markup);
+  });
+
+  return '<span class="math-view">' + html + '</span>';
+}
+
+function render(){const s=steps[index];badge.textContent=`Paso ${index+1} de ${steps.length}`;title.textContent=s.title;message.textContent=s.message;formula.innerHTML=mathify(s.formula);replaceInfo.innerHTML=mathify(s.replace);keepInfo.innerHTML=mathify(s.keep);rule.innerHTML=mathify(s.rule);result.innerHTML=mathify(s.result);prev.disabled=index===0;next.disabled=index===steps.length-1;range.value=String(index)}
+prev.addEventListener('click',()=>{index=Math.max(0,index-1);render()});next.addEventListener('click',()=>{index=Math.min(steps.length-1,index+1);render()});range.addEventListener('input',()=>{index=Number(range.value);render()});render();
+</script>
+</body>
+</html>

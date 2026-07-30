@@ -1,0 +1,1482 @@
+
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Simulador Quick Sort línea por línea</title>
+  <style>
+    :root {
+      --bg: #f4f6f9;
+      --panel: #ffffff;
+      --border: #d0d5dd;
+      --text: #172033;
+      --muted: #667085;
+      --accent: #2563eb;
+      --accent-soft: #dbeafe;
+      --accent-strong: #1d4ed8;
+      --pivot: #d97706;
+      --pivot-soft: #fef3c7;
+      --left: #15803d;
+      --left-soft: #dcfce7;
+      --right: #b91c1c;
+      --right-soft: #fee2e2;
+      --swap: #7c3aed;
+      --swap-soft: #ede9fe;
+      --code-bg: #0f172a;
+      --code-text: #e5e7eb;
+      --code-muted: #94a3b8;
+      --active-line: rgba(37, 99, 235, .28);
+      --active-border: #60a5fa;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+    }
+
+    main {
+      width: calc(100% - 20px);
+      margin: 18px auto 28px;
+    }
+
+    h1, h2, h3, p { margin-top: 0; }
+    h1 { margin-bottom: 6px; font-size: 30px; }
+    .intro { color: var(--muted); margin-bottom: 14px; }
+
+    .panel {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 16px;
+    }
+
+    .controls {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto auto;
+      gap: 10px;
+      align-items: end;
+      margin-bottom: 14px;
+    }
+
+    label {
+      display: block;
+      font-weight: 600;
+    }
+
+    input[type="text"] {
+      width: 100%;
+      margin-top: 6px;
+      padding: 10px 12px;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      font-size: 16px;
+    }
+
+    button {
+      border: 1px solid var(--border);
+      background: white;
+      color: var(--text);
+      padding: 10px 13px;
+      border-radius: 10px;
+      cursor: pointer;
+      font-size: 15px;
+    }
+
+    button.primary {
+      background: var(--accent);
+      color: white;
+      border-color: var(--accent);
+    }
+
+    button:hover:not(:disabled) {
+      border-color: var(--accent);
+    }
+
+    button:disabled {
+      opacity: .45;
+      cursor: not-allowed;
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: minmax(430px, 42%) minmax(620px, 58%);
+      gap: 14px;
+      align-items: start;
+    }
+
+    .left-col, .right-col {
+      display: grid;
+      gap: 14px;
+    }
+
+    .code-panel {
+      padding: 0;
+      overflow: hidden;
+    }
+
+    .code-header {
+      background: #020617;
+      color: white;
+      border-bottom: 1px solid #334155;
+      padding: 12px 14px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+    }
+
+    .code-header h2 {
+      margin: 0;
+      font-size: 17px;
+    }
+
+    .code-header .code-status {
+      color: #cbd5e1;
+      font-size: 12px;
+      text-align: right;
+    }
+
+    .code {
+      background: var(--code-bg);
+      color: var(--code-text);
+      font-family: Consolas, Monaco, monospace;
+      font-size: 13px;
+      line-height: 1.5;
+      max-height: 760px;
+      overflow: auto;
+      padding: 8px 0;
+    }
+
+    .code-line {
+      display: grid;
+      grid-template-columns: 48px minmax(0, 1fr);
+      white-space: pre;
+      border-left: 4px solid transparent;
+      padding: 2px 14px 2px 0;
+    }
+
+    .code-line.active {
+      background: var(--active-line);
+      border-left-color: var(--active-border);
+    }
+
+    .line-number {
+      text-align: right;
+      padding-right: 10px;
+      color: var(--code-muted);
+      user-select: none;
+    }
+
+    .code-content { color: var(--code-text); }
+    .tok-keyword { color: #c084fc; font-weight: 600; }
+    .tok-type { color: #60a5fa; font-weight: 600; }
+    .tok-method { color: #22d3ee; }
+    .tok-variable { color: #f8fafc; }
+    .tok-number { color: #f59e0b; }
+    .tok-comment { color: #34d399; font-style: italic; }
+    .tok-operator, .tok-punctuation { color: #cbd5e1; }
+
+    .metrics {
+      display: grid;
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .metric {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 12px;
+    }
+
+    .metric span {
+      display: block;
+      color: var(--muted);
+      font-size: 12px;
+      margin-bottom: 4px;
+    }
+
+    .metric strong {
+      font-size: 20px;
+    }
+
+    .message {
+      background: var(--accent-soft);
+      border-left: 5px solid var(--accent);
+      border-radius: 10px;
+      padding: 14px 16px;
+      min-height: 106px;
+    }
+
+    .badge {
+      display: inline-block;
+      margin-bottom: 7px;
+      padding: 4px 9px;
+      border-radius: 999px;
+      background: var(--accent);
+      color: white;
+      font-size: 12px;
+      font-weight: bold;
+    }
+
+    .array-panel h2, .stack-panel h2, .vars-panel h2, .conditions-panel h2 {
+      margin-bottom: 10px;
+      font-size: 18px;
+    }
+
+    .array {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 16px;
+      justify-content: center;
+      padding: 44px 0 40px;
+    }
+
+    .cell {
+      position: relative;
+      min-width: 72px;
+      height: 86px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 24px;
+      font-weight: bold;
+      border-radius: 12px;
+      border: 2px solid var(--border);
+      background: white;
+      transition: .2s ease;
+    }
+
+    .cell.outside { opacity: .35; }
+    .cell.active-range { background: #f8fbff; }
+    .cell.pivot { background: var(--pivot-soft); border-color: var(--pivot); }
+    .cell.i-marker { background: var(--left-soft); border-color: var(--left); transform: translateY(-8px); }
+    .cell.j-marker { background: var(--right-soft); border-color: var(--right); transform: translateY(8px); }
+    .cell.swap-marker { box-shadow: 0 0 0 3px rgba(124, 58, 237, .16); border-style: dashed; }
+
+    .index {
+      position: absolute;
+      top: -24px;
+      font-size: 12px;
+      color: var(--muted);
+      font-weight: normal;
+    }
+
+    .markers {
+      position: absolute;
+      bottom: -30px;
+      display: flex;
+      gap: 5px;
+    }
+
+    .marker {
+      color: white;
+      font-size: 12px;
+      padding: 3px 7px;
+      border-radius: 999px;
+    }
+
+    .marker.p { background: var(--pivot); }
+    .marker.i { background: var(--left); }
+    .marker.j { background: var(--right); }
+    .marker.s { background: var(--swap); }
+
+    .legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      justify-content: center;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .legend span {
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      padding: 4px 9px;
+      background: white;
+    }
+
+    .nav-panel {
+      display: grid;
+      gap: 12px;
+    }
+
+    .nav {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    input[type="range"] {
+      width: 100%;
+    }
+
+    .triple {
+      display: grid;
+      grid-template-columns: 1.05fr 1fr 1fr;
+      gap: 14px;
+    }
+
+    .subtle-box {
+      background: #f8fafc;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 12px;
+    }
+
+    .stack-list, .vars-list {
+      display: grid;
+      gap: 8px;
+    }
+
+    .stack-frame {
+      border: 1px solid var(--border);
+      border-left: 5px solid var(--accent);
+      border-radius: 10px;
+      padding: 10px 12px;
+      background: white;
+    }
+
+    .stack-frame.active {
+      background: var(--accent-soft);
+      border-left-color: var(--accent-strong);
+    }
+
+    .call-id {
+      display: inline-block;
+      margin-right: 6px;
+      padding: 2px 8px;
+      border-radius: 999px;
+      background: #e0e7ff;
+      color: #3730a3;
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    .stack-frame strong {
+      display: block;
+      margin-bottom: 4px;
+    }
+
+    .stack-frame span {
+      color: var(--muted);
+      font-size: 13px;
+      display: block;
+      margin-top: 2px;
+      word-break: break-word;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 14px;
+    }
+
+    th, td {
+      text-align: left;
+      vertical-align: top;
+      padding: 8px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    th {
+      color: var(--muted);
+      font-weight: 600;
+    }
+
+    .ok { color: var(--left); font-weight: bold; }
+    .bad { color: var(--right); font-weight: bold; }
+
+    .recursion-tree { display: grid; gap: 8px; }
+    .tree-node { border: 1px solid var(--border); border-left: 5px solid #94a3b8; border-radius: 10px; padding: 10px 12px; background: white; }
+    .tree-node.active { background: var(--accent-soft); border-left-color: var(--accent); box-shadow: 0 0 0 2px rgba(37, 99, 235, .1); }
+    .tree-node.returned { opacity: .58; }
+    .tree-title { font-weight: 700; }
+    .tree-meta { display: block; margin-top: 3px; color: var(--muted); font-size: 12px; }
+    .tree-arrow { color: var(--muted); font-size: 13px; margin-right: 6px; }
+    .complexity-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+    .formula-step { border: 1px solid var(--border); border-radius: 10px; padding: 11px 12px; margin-top: 8px; background: #f8fafc; font-family: Consolas, Monaco, monospace; line-height: 1.55; }
+    .formula-step strong { font-family: Arial, sans-serif; }
+    .complexity-note { margin-top: 10px; border-left: 4px solid var(--pivot); background: var(--pivot-soft); border-radius: 8px; padding: 10px 12px; }
+
+    @media (max-width: 1180px) {
+      .layout { grid-template-columns: 1fr; }
+      .code { max-height: 420px; }
+    }
+
+    @media (max-width: 860px) {
+      .controls { grid-template-columns: 1fr; }
+      .metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .triple, .complexity-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+<main>
+  <h1>Simulador Quick Sort línea por línea</h1>
+  <p class="intro">
+    Esta versión sí avanza línea por línea. Cada paso ejecuta una sola línea del código y muestra el estado exacto del arreglo, la pila de llamadas y las variables de la llamada activa.
+  </p>
+
+  <section class="panel controls">
+    <label>
+      Arreglo
+      <input id="arrayInput" type="text" value="12, 13, 5, 6">
+    </label>
+    <button id="generate" class="primary" type="button">Generar simulación</button>
+    <button id="resetExample" type="button">Restaurar ejemplo</button>
+  </section>
+
+  <section class="layout">
+    <div class="left-col">
+      <section class="panel code-panel">
+        <div class="code-header">
+          <h2>Código Java</h2>
+          <div id="codeStatus" class="code-status">Línea actual: —</div>
+        </div>
+        <div id="codeView" class="code"></div>
+      </section>
+    </div>
+
+    <div class="right-col">
+      <section class="metrics">
+        <div class="metric">
+          <span>Paso</span>
+          <strong id="stepValue">1 / 1</strong>
+        </div>
+        <div class="metric">
+          <span>Línea actual</span>
+          <strong id="lineValue">—</strong>
+        </div>
+        <div class="metric">
+          <span>Llamada activa</span>
+          <strong id="callValue">—</strong>
+        </div>
+        <div class="metric">
+          <span>Pivote</span>
+          <strong id="pivotValue">—</strong>
+        </div>
+        <div class="metric">
+          <span>Función activa</span>
+          <strong id="functionValue">—</strong>
+        </div>
+      </section>
+
+      <section class="message">
+        <div id="badge" class="badge">Inicio</div>
+        <h2 id="title">Arreglo inicial</h2>
+        <p id="message"></p>
+      </section>
+
+      <section class="panel array-panel">
+        <h2>Arreglo</h2>
+        <div id="arrayView" class="array"></div>
+        <div class="legend">
+          <span>P: pivote</span>
+          <span>i: recorrido izquierdo</span>
+          <span>j: recorrido derecho</span>
+          <span>s: posiciones del swap</span>
+        </div>
+      </section>
+
+      <section class="panel nav-panel">
+        <div class="nav">
+          <button id="first" type="button">Inicio</button>
+          <button id="prev" type="button">Anterior</button>
+          <button id="next" type="button">Siguiente</button>
+          <button id="last" type="button">Final</button>
+          <button id="play" type="button">Reproducir</button>
+        </div>
+        <input id="stepRange" type="range" min="0" max="0" value="0">
+      </section>
+
+      <section class="triple">
+        <section class="panel">
+          <h2>Subarreglo actual</h2>
+          <div id="subarrayInfo" class="subtle-box"></div>
+        </section>
+
+        <section class="panel stack-panel">
+          <h2>Pila de llamadas</h2>
+          <div id="stackView" class="stack-list"></div>
+        </section>
+
+        <section class="panel vars-panel">
+          <h2>Variables de la llamada activa</h2>
+          <div id="varsView" class="vars-list"></div>
+        </section>
+      </section>
+
+      <section class="panel">
+        <h2>Árbol de llamadas recursivas</h2>
+        <p style="color: var(--muted); margin-bottom: 10px;">Cada nodo es una llamada. La llamada activa se resalta y las que ya retornaron quedan atenuadas.</p>
+        <div id="recursionTree" class="recursion-tree"></div>
+      </section>
+
+      <section class="panel">
+        <h2>Cálculo de complejidad por sustitución</h2>
+        <div class="complexity-grid">
+          <div>
+            <h3>Caso balanceado</h3>
+            <p>Cuando el pivote divide el arreglo en dos partes aproximadamente iguales:</p>
+            <div class="formula-step"><strong>Recurrencia:</strong><br>T(n) = 2T(n/2) + cn</div>
+            <div class="formula-step"><strong>Primera sustitución:</strong><br>T(n) = 2[2T(n/4) + c(n/2)] + cn<br>T(n) = 4T(n/4) + 2cn</div>
+            <div class="formula-step"><strong>Segunda sustitución:</strong><br>T(n) = 4[2T(n/8) + c(n/4)] + 2cn<br>T(n) = 8T(n/8) + 3cn</div>
+            <div class="formula-step"><strong>Después de k sustituciones:</strong><br>T(n) = 2<sup>k</sup>T(n/2<sup>k</sup>) + kcn</div>
+            <div class="formula-step"><strong>Caso base:</strong><br>n/2<sup>k</sup> = 1<br>2<sup>k</sup> = n<br>k = log<sub>2</sub>(n)</div>
+            <div class="formula-step"><strong>Resultado:</strong><br>T(n) = nT(1) + cn log<sub>2</sub>(n)<br>T(n) = O(n log n)</div>
+          </div>
+          <div>
+            <h3>Peor caso</h3>
+            <p>Si el pivote siempre queda en un extremo, por ejemplo al elegir el primero en un arreglo ya ordenado:</p>
+            <div class="formula-step"><strong>Recurrencia:</strong><br>T(n) = T(n - 1) + cn</div>
+            <div class="formula-step"><strong>Sustituyendo:</strong><br>T(n) = T(n - 2) + c(n - 1) + cn</div>
+            <div class="formula-step">T(n) = T(n - 3) + c(n - 2) + c(n - 1) + cn</div>
+            <div class="formula-step"><strong>Hasta el caso base:</strong><br>T(n) = T(1) + c(2 + 3 + ... + n)</div>
+            <div class="formula-step">2 + 3 + ... + n = n(n + 1)/2 - 1</div>
+            <div class="formula-step"><strong>Resultado:</strong><br>T(n) = O(n²)</div>
+            <div class="complexity-note">En este simulador se usa el primer elemento como pivote. Por eso un arreglo ya ordenado puede producir el peor caso.</div>
+          </div>
+        </div>
+      </section>
+
+      <section class="panel conditions-panel">
+        <h2>Resultado de la línea ejecutada</h2>
+        <table>
+          <thead>
+            <tr>
+              <th>Expresión</th>
+              <th>Resultado</th>
+              <th>Efecto</th>
+            </tr>
+          </thead>
+          <tbody id="conditionsBody"></tbody>
+        </table>
+      </section>
+    </div>
+  </section>
+</main>
+
+<script>
+const CODE_LINES = [
+  'public static void quickSort(int[] arr, int left, int right) {',
+  '    if (left < right) {',
+  '        int pivotPosition = partition(arr, left, right);',
+  '        quickSort(arr, left, pivotPosition - 1);',
+  '        quickSort(arr, pivotPosition + 1, right);',
+  '    }',
+  '}',
+  '',
+  'public static int partition(int[] arr, int left, int right) {',
+  '    int pivot = arr[left];',
+  '    int i = left + 1;',
+  '    int j = right;',
+  '    while (i <= j) {',
+  '        while (i <= right && arr[i] <= pivot) {',
+  '            i++;',
+  '        }',
+  '        while (j > left && arr[j] > pivot) {',
+  '            j--;',
+  '        }',
+  '        if (i < j) {',
+  '            swap(arr, i, j);',
+  '        }',
+  '    }',
+  '    swap(arr, left, j);',
+  '    return j;',
+  '}',
+  '',
+  'public static void swap(int[] arr, int a, int b) {',
+  '    int temp = arr[a];',
+  '    arr[a] = arr[b];',
+  '    arr[b] = temp;',
+  '}'
+];
+
+const input = document.getElementById('arrayInput');
+const codeView = document.getElementById('codeView');
+const codeStatus = document.getElementById('codeStatus');
+const stepValue = document.getElementById('stepValue');
+const lineValue = document.getElementById('lineValue');
+const callValue = document.getElementById('callValue');
+const pivotValue = document.getElementById('pivotValue');
+const functionValue = document.getElementById('functionValue');
+const badge = document.getElementById('badge');
+const title = document.getElementById('title');
+const message = document.getElementById('message');
+const arrayView = document.getElementById('arrayView');
+const range = document.getElementById('stepRange');
+const subarrayInfo = document.getElementById('subarrayInfo');
+const stackView = document.getElementById('stackView');
+const varsView = document.getElementById('varsView');
+const conditionsBody = document.getElementById('conditionsBody');
+const recursionTree = document.getElementById('recursionTree');
+
+let steps = [];
+let currentStep = 0;
+let playTimer = null;
+
+function escapeHtml(text) {
+  return text
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;");
+}
+
+function highlightJava(line) {
+  if (!line) return '&nbsp;';
+  const KEYWORDS = new Set(['public', 'static', 'void', 'if', 'while', 'return']);
+  const TYPES = new Set(['int']);
+  const METHODS = new Set(['quickSort', 'partition', 'swap']);
+  const VARIABLES = new Set(['arr', 'left', 'right', 'pivotPosition', 'pivot', 'i', 'j', 'a', 'b', 'temp']);
+
+  let html = '';
+  let i = 0;
+
+  while (i < line.length) {
+    const ch = line[i];
+
+    if (ch === '/' && line[i + 1] === '/') {
+      html += `<span class="tok-comment">${escapeHtml(line.slice(i))}</span>`;
+      break;
+    }
+
+    if (/\s/.test(ch)) {
+      html += ch === ' ' ? '&nbsp;' : ch;
+      i++;
+      continue;
+    }
+
+    if (/[A-Za-z_]/.test(ch)) {
+      let j = i + 1;
+      while (j < line.length && /[A-Za-z0-9_]/.test(line[j])) j++;
+      const word = line.slice(i, j);
+
+      let cls = 'tok-variable';
+      if (KEYWORDS.has(word)) cls = 'tok-keyword';
+      else if (TYPES.has(word)) cls = 'tok-type';
+      else if (METHODS.has(word)) cls = 'tok-method';
+
+      html += `<span class="${cls}">${escapeHtml(word)}</span>`;
+      i = j;
+      continue;
+    }
+
+    if (/\d/.test(ch)) {
+      let j = i + 1;
+      while (j < line.length && /\d/.test(line[j])) j++;
+      html += `<span class="tok-number">${line.slice(i, j)}</span>`;
+      i = j;
+      continue;
+    }
+
+    html += `<span class="tok-punctuation">${escapeHtml(ch)}</span>`;
+    i++;
+  }
+
+  return html;
+}
+
+function drawCode() {
+  codeView.innerHTML = '';
+  CODE_LINES.forEach((line, index) => {
+    const row = document.createElement('div');
+    row.className = 'code-line';
+    row.dataset.line = String(index + 1);
+
+    const number = document.createElement('span');
+    number.className = 'line-number';
+    number.textContent = index + 1;
+
+    const content = document.createElement('span');
+    content.className = 'code-content';
+    content.innerHTML = highlightJava(line);
+
+    row.append(number, content);
+    codeView.appendChild(row);
+  });
+}
+
+function deepFrames(frames) {
+  return frames.map(frame => ({
+    id: frame.id,
+    func: frame.func,
+    origin: frame.origin,
+    vars: { ...frame.vars },
+    left: frame.left,
+    right: frame.right,
+    values: [...frame.values],
+    parentId: frame.parentId,
+    depth: frame.depth,
+    status: frame.status
+  }));
+}
+
+function createSimulatorSteps(values) {
+  steps = [];
+  const arr = [...values];
+  const stack = [];
+  const calls = [];
+  let callCounter = 0;
+
+  function currentFrame() {
+    return stack.length ? stack[stack.length - 1] : null;
+  }
+
+  function refreshFrameRanges() {
+    stack.forEach(frame => {
+      frame.values = frame.left <= frame.right
+        ? arr.slice(Math.max(0, frame.left), frame.right + 1)
+        : [];
+    });
+  }
+
+  function pushFrame(func, origin, data) {
+    const parent = stack.length ? stack[stack.length - 1] : null;
+    const frame = {
+      id: ++callCounter,
+      parentId: parent ? parent.id : null,
+      depth: parent ? parent.depth + 1 : 0,
+      status: 'active',
+      func,
+      origin,
+      vars: {},
+      left: data.left ?? null,
+      right: data.right ?? null,
+      values: []
+    };
+    Object.assign(frame.vars, data);
+    stack.push(frame);
+    calls.push(frame);
+    refreshFrameRanges();
+    return frame;
+  }
+
+  function popFrame() {
+    const frame = stack[stack.length - 1];
+    if (frame) frame.status = 'returned';
+    stack.pop();
+  }
+
+  function addStep(data) {
+    refreshFrameRanges();
+    const active = currentFrame();
+    steps.push({
+      line: data.line ?? null,
+      phase: data.phase ?? 'Ejecución',
+      title: data.title,
+      message: data.message,
+      arr: [...arr],
+      stack: deepFrames(stack),
+      conditions: data.conditions ?? [],
+      pivotIndex: data.pivotIndex ?? null,
+      iIndex: data.iIndex ?? null,
+      jIndex: data.jIndex ?? null,
+      swapIndices: data.swapIndices ?? [],
+      activeCallId: active ? active.id : null,
+      activeFunction: active ? active.func : null,
+      activeVars: active ? { ...active.vars } : {},
+      calls: calls.map(call => ({
+        id: call.id, parentId: call.parentId, depth: call.depth, status: call.status,
+        func: call.func, origin: call.origin, left: call.left, right: call.right, values: [...call.values]
+      }))
+    });
+  }
+
+  function swap(a, b, origin) {
+    const frame = pushFrame('swap', origin, { a, b, temp: null });
+
+    addStep({
+      line: 28,
+      phase: 'Llamada a swap',
+      title: `Entra a swap(arr, ${a}, ${b})`,
+      message: `Se crea la llamada #${frame.id} para intercambiar arr[${a}] con arr[${b}].`,
+      swapIndices: [a, b],
+      conditions: [
+        { expression: 'llamada swap', result: `#${frame.id}`, effect: origin }
+      ]
+    });
+
+    frame.vars.temp = arr[a];
+    addStep({
+      line: 29,
+      phase: 'Asignación',
+      title: `Se guarda temp = arr[${a}]`,
+      message: `temp toma el valor ${arr[a]}.`,
+      swapIndices: [a, b],
+      conditions: [
+        { expression: `temp = arr[${a}]`, result: `${frame.vars.temp}`, effect: 'Guardar temporalmente el valor original' }
+      ]
+    });
+
+    arr[a] = arr[b];
+    addStep({
+      line: 30,
+      phase: 'Asignación',
+      title: `Se ejecuta arr[${a}] = arr[${b}]`,
+      message: `La posición ${a} ahora recibe el valor ${arr[a]}.`,
+      swapIndices: [a, b],
+      conditions: [
+        { expression: `arr[${a}] = arr[${b}]`, result: `${arr[a]}`, effect: `Mover ${arr[a]} a la posición ${a}` }
+      ]
+    });
+
+    arr[b] = frame.vars.temp;
+    addStep({
+      line: 31,
+      phase: 'Asignación',
+      title: `Se ejecuta arr[${b}] = temp`,
+      message: `La posición ${b} recibe el valor temporal ${arr[b]}. El intercambio termina.`,
+      swapIndices: [a, b],
+      conditions: [
+        { expression: `arr[${b}] = temp`, result: `${arr[b]}`, effect: 'Completar el intercambio' }
+      ]
+    });
+
+    addStep({
+      line: null,
+      phase: 'Retorno',
+      title: `Retorna swap #${frame.id}`,
+      message: `La llamada swap #${frame.id} finaliza y el control vuelve a la función que la invocó.`,
+      swapIndices: [a, b],
+      conditions: [
+        { expression: 'return', result: 'Completado', effect: 'Volver a la función anterior' }
+      ]
+    });
+
+    popFrame();
+  }
+
+  function partition(left, right, origin) {
+    const frame = pushFrame('partition', origin, {
+      left,
+      right,
+      pivot: null,
+      i: null,
+      j: null,
+      returnValue: null
+    });
+
+    addStep({
+      line: 9,
+      phase: 'Llamada recursiva',
+      title: `Entra a partition(${left}, ${right})`,
+      message: `Se crea la llamada #${frame.id} para particionar el subarreglo [${left}, ${right}].`,
+      conditions: [
+        { expression: 'llamada partition', result: `#${frame.id}`, effect: origin }
+      ]
+    });
+
+    frame.vars.pivot = arr[left];
+    addStep({
+      line: 10,
+      phase: 'Asignación',
+      title: `pivot = arr[${left}]`,
+      message: `El pivote toma el valor ${frame.vars.pivot}.`,
+      pivotIndex: left,
+      conditions: [
+        { expression: `pivot = arr[${left}]`, result: `${frame.vars.pivot}`, effect: 'Guardar el pivote' }
+      ]
+    });
+
+    frame.vars.i = left + 1;
+    addStep({
+      line: 11,
+      phase: 'Asignación',
+      title: `i = left + 1`,
+      message: `i comienza en ${frame.vars.i}.`,
+      pivotIndex: left,
+      iIndex: frame.vars.i,
+      conditions: [
+        { expression: `${left} + 1`, result: `${frame.vars.i}`, effect: 'Inicializar i' }
+      ]
+    });
+
+    frame.vars.j = right;
+    addStep({
+      line: 12,
+      phase: 'Asignación',
+      title: `j = right`,
+      message: `j comienza en ${frame.vars.j}.`,
+      pivotIndex: left,
+      iIndex: frame.vars.i,
+      jIndex: frame.vars.j,
+      conditions: [
+        { expression: `j = ${right}`, result: `${frame.vars.j}`, effect: 'Inicializar j' }
+      ]
+    });
+
+    while (true) {
+      const whileCond = frame.vars.i <= frame.vars.j;
+      addStep({
+        line: 13,
+        phase: 'Evaluación',
+        title: `Se evalúa while (i <= j)`,
+        message: `Se comprueba si ${frame.vars.i} <= ${frame.vars.j}.`,
+        pivotIndex: left,
+        iIndex: frame.vars.i,
+        jIndex: frame.vars.j,
+        conditions: [
+          { expression: `${frame.vars.i} <= ${frame.vars.j}`, result: whileCond ? 'Verdadero' : 'Falso', effect: whileCond ? 'Continuar dentro del ciclo' : 'Salir del ciclo principal' }
+        ]
+      });
+      if (!whileCond) break;
+
+      while (true) {
+        const inBounds = frame.vars.i <= right;
+        const compare = inBounds ? arr[frame.vars.i] <= frame.vars.pivot : false;
+        const cond = inBounds && compare;
+
+        addStep({
+          line: 14,
+          phase: 'Evaluación',
+          title: `Se evalúa while (i <= right && arr[i] <= pivot)`,
+          message: inBounds
+            ? `Se comprueba si ${frame.vars.i} <= ${right} y si ${arr[frame.vars.i]} <= ${frame.vars.pivot}.`
+            : `i ya salió del subarreglo porque ${frame.vars.i} > ${right}.`,
+          pivotIndex: left,
+          iIndex: frame.vars.i,
+          jIndex: frame.vars.j,
+          conditions: [
+            { expression: `${frame.vars.i} <= ${right}`, result: inBounds ? 'Verdadero' : 'Falso', effect: inBounds ? 'i sigue dentro del rango' : 'Detener el ciclo interno' },
+            { expression: inBounds ? `${arr[frame.vars.i]} <= ${frame.vars.pivot}` : 'arr[i] <= pivot', result: cond ? 'Verdadero' : 'Falso', effect: cond ? 'Se ejecutará i++' : 'Detener el avance de i' }
+          ]
+        });
+
+        if (!cond) break;
+
+        frame.vars.i++;
+        addStep({
+          line: 15,
+          phase: 'Actualización',
+          title: 'Se ejecuta i++',
+          message: `i avanza a ${frame.vars.i}.`,
+          pivotIndex: left,
+          iIndex: frame.vars.i,
+          jIndex: frame.vars.j,
+          conditions: [
+            { expression: 'i++', result: `${frame.vars.i}`, effect: 'Mover i una posición a la derecha' }
+          ]
+        });
+      }
+
+      while (true) {
+        const cond = frame.vars.j > left && arr[frame.vars.j] > frame.vars.pivot;
+
+        addStep({
+          line: 17,
+          phase: 'Evaluación',
+          title: `Se evalúa while (j > left && arr[j] > pivot)`,
+          message: frame.vars.j > left
+            ? `Se comprueba si ${frame.vars.j} > ${left} y si ${arr[frame.vars.j]} > ${frame.vars.pivot}.`
+            : `j ya llegó a la posición del pivote.`,
+          pivotIndex: left,
+          iIndex: frame.vars.i,
+          jIndex: frame.vars.j,
+          conditions: [
+            { expression: `${frame.vars.j} > ${left}`, result: frame.vars.j > left ? 'Verdadero' : 'Falso', effect: frame.vars.j > left ? 'j todavía puede retroceder' : 'Detener el ciclo interno' },
+            { expression: frame.vars.j > left ? `${arr[frame.vars.j]} > ${frame.vars.pivot}` : 'arr[j] > pivot', result: cond ? 'Verdadero' : 'Falso', effect: cond ? 'Se ejecutará j--' : 'Detener el retroceso de j' }
+          ]
+        });
+
+        if (!cond) break;
+
+        frame.vars.j--;
+        addStep({
+          line: 18,
+          phase: 'Actualización',
+          title: 'Se ejecuta j--',
+          message: `j retrocede a ${frame.vars.j}.`,
+          pivotIndex: left,
+          iIndex: frame.vars.i,
+          jIndex: frame.vars.j,
+          conditions: [
+            { expression: 'j--', result: `${frame.vars.j}`, effect: 'Mover j una posición a la izquierda' }
+          ]
+        });
+      }
+
+      const ifCond = frame.vars.i < frame.vars.j;
+      addStep({
+        line: 20,
+        phase: 'Evaluación',
+        title: `Se evalúa if (i < j)`,
+        message: `Se comprueba si ${frame.vars.i} < ${frame.vars.j}.`,
+        pivotIndex: left,
+        iIndex: frame.vars.i,
+        jIndex: frame.vars.j,
+        conditions: [
+          { expression: `${frame.vars.i} < ${frame.vars.j}`, result: ifCond ? 'Verdadero' : 'Falso', effect: ifCond ? 'Se llamará a swap(arr, i, j)' : 'No se realizará intercambio interno' }
+        ]
+      });
+
+      if (ifCond) {
+        addStep({
+          line: 21,
+          phase: 'Llamada a función',
+          title: `Se llama swap(arr, ${frame.vars.i}, ${frame.vars.j})`,
+          message: `Se intercambiarán los valores ${arr[frame.vars.i]} y ${arr[frame.vars.j]}.`,
+          pivotIndex: left,
+          iIndex: frame.vars.i,
+          jIndex: frame.vars.j,
+          swapIndices: [frame.vars.i, frame.vars.j],
+          conditions: [
+            { expression: `swap(arr, ${frame.vars.i}, ${frame.vars.j})`, result: 'Invocación', effect: 'Entrar a la función swap' }
+          ]
+        });
+
+        swap(frame.vars.i, frame.vars.j, `llamada desde partition #${frame.id}`);
+      }
+    }
+
+    addStep({
+      line: 24,
+      phase: 'Llamada a función',
+      title: `Se llama swap(arr, ${left}, ${frame.vars.j})`,
+      message: `Ahora el pivote se intercambia con arr[${frame.vars.j}] para quedar en su posición definitiva.`,
+      pivotIndex: left,
+      iIndex: frame.vars.i,
+      jIndex: frame.vars.j,
+      swapIndices: [left, frame.vars.j],
+      conditions: [
+        { expression: `swap(arr, ${left}, ${frame.vars.j})`, result: 'Invocación', effect: 'Colocar el pivote en la posición j' }
+      ]
+    });
+
+    swap(left, frame.vars.j, `llamada final desde partition #${frame.id}`);
+
+    frame.vars.returnValue = frame.vars.j;
+    addStep({
+      line: 25,
+      phase: 'Retorno',
+      title: `Se ejecuta return j`,
+      message: `partition devuelve ${frame.vars.returnValue}.`,
+      pivotIndex: frame.vars.returnValue,
+      iIndex: frame.vars.i,
+      jIndex: frame.vars.j,
+      conditions: [
+        { expression: 'return j', result: `${frame.vars.returnValue}`, effect: 'Devolver la posición final del pivote' }
+      ]
+    });
+
+    const result = frame.vars.returnValue;
+    popFrame();
+    return result;
+  }
+
+  function quickSort(left, right, origin) {
+    const frame = pushFrame('quickSort', origin, {
+      left,
+      right,
+      pivotPosition: null
+    });
+
+    addStep({
+      line: 1,
+      phase: 'Llamada recursiva',
+      title: `Entra a quickSort(${left}, ${right})`,
+      message: `Se crea la llamada #${frame.id}.`,
+      conditions: [
+        { expression: 'llamada quickSort', result: `#${frame.id}`, effect: origin }
+      ]
+    });
+
+    const cond = left < right;
+    addStep({
+      line: 2,
+      phase: 'Evaluación',
+      title: `Se evalúa if (left < right)`,
+      message: `Se comprueba si ${left} < ${right}.`,
+      conditions: [
+        { expression: `${left} < ${right}`, result: cond ? 'Verdadero' : 'Falso', effect: cond ? 'Continuar con la partición' : 'Caso base, no hacer nada' }
+      ]
+    });
+
+    if (cond) {
+      addStep({
+        line: 3,
+        phase: 'Llamada a función',
+        title: `Se llama partition(arr, ${left}, ${right})`,
+        message: `Quick Sort necesita ubicar el pivote en su posición correcta.`,
+        conditions: [
+          { expression: `partition(arr, ${left}, ${right})`, result: 'Invocación', effect: 'Entrar a partition' }
+        ]
+      });
+
+      frame.vars.pivotPosition = partition(left, right, `llamada desde quickSort #${frame.id}`);
+
+      addStep({
+        line: 3,
+        phase: 'Retorno',
+        title: `Retorna partition para quickSort #${frame.id}`,
+        message: `pivotPosition toma el valor ${frame.vars.pivotPosition}.`,
+        conditions: [
+          { expression: 'pivotPosition', result: `${frame.vars.pivotPosition}`, effect: 'Guardar la posición final del pivote' }
+        ]
+      });
+
+      addStep({
+        line: 4,
+        phase: 'Llamada recursiva',
+        title: `Se llama quickSort(arr, ${left}, ${frame.vars.pivotPosition - 1})`,
+        message: `Primero se ordena la parte izquierda del pivote.`,
+        conditions: [
+          { expression: `quickSort(arr, ${left}, ${frame.vars.pivotPosition - 1})`, result: 'Invocación', effect: `Crear la rama izquierda desde #${frame.id}` }
+        ]
+      });
+
+      quickSort(left, frame.vars.pivotPosition - 1, `rama izquierda de #${frame.id}`);
+
+      addStep({
+        line: 4,
+        phase: 'Retorno',
+        title: `Regresa la rama izquierda a quickSort #${frame.id}`,
+        message: `La llamada izquierda ya terminó.`,
+        conditions: [
+          { expression: 'retorno rama izquierda', result: 'Completado', effect: 'Continuar con la rama derecha' }
+        ]
+      });
+
+      addStep({
+        line: 5,
+        phase: 'Llamada recursiva',
+        title: `Se llama quickSort(arr, ${frame.vars.pivotPosition + 1}, ${right})`,
+        message: `Ahora se ordena la parte derecha del pivote.`,
+        conditions: [
+          { expression: `quickSort(arr, ${frame.vars.pivotPosition + 1}, ${right})`, result: 'Invocación', effect: `Crear la rama derecha desde #${frame.id}` }
+        ]
+      });
+
+      quickSort(frame.vars.pivotPosition + 1, right, `rama derecha de #${frame.id}`);
+
+      addStep({
+        line: 5,
+        phase: 'Retorno',
+        title: `Regresa la rama derecha a quickSort #${frame.id}`,
+        message: `La llamada derecha ya terminó.`,
+        conditions: [
+          { expression: 'retorno rama derecha', result: 'Completado', effect: 'Finalizar la llamada actual' }
+        ]
+      });
+    }
+
+    addStep({
+      line: null,
+      phase: 'Retorno',
+      title: `Retorna quickSort #${frame.id}`,
+      message: `La llamada quickSort #${frame.id} termina.`,
+      conditions: [
+        { expression: 'return', result: 'Completado', effect: 'Volver a la llamada anterior' }
+      ]
+    });
+
+    popFrame();
+  }
+
+  addStep({
+    line: null,
+    phase: 'Inicio',
+    title: 'Estado inicial',
+    message: `Arreglo de entrada: [${arr.join(', ')}].`,
+    conditions: [
+      { expression: 'entrada', result: `[${arr.join(', ')}]`, effect: 'Preparar la llamada quickSort(arr, 0, n - 1)' }
+    ]
+  });
+
+  quickSort(0, arr.length - 1, 'llamada raíz');
+
+  addStep({
+    line: null,
+    phase: 'Resultado final',
+    title: 'Simulación terminada',
+    message: `Arreglo ordenado: [${arr.join(', ')}].`,
+    conditions: [
+      { expression: 'salida', result: `[${arr.join(', ')}]`, effect: 'Fin del algoritmo' }
+    ]
+  });
+}
+
+function renderCode(step) {
+  const lines = codeView.querySelectorAll('.code-line');
+  lines.forEach(row => {
+    const ln = Number(row.dataset.line);
+    row.classList.toggle('active', step.line === ln);
+    if (step.line === ln) {
+      row.scrollIntoView({ block: 'nearest' });
+    }
+  });
+
+  codeStatus.textContent = step.line ? `Línea actual: ${step.line}` : 'Sin línea específica';
+}
+
+function renderArray(step) {
+  arrayView.innerHTML = '';
+  const active = step.stack.length ? step.stack[step.stack.length - 1] : null;
+  const left = active ? active.left : null;
+  const right = active ? active.right : null;
+
+  step.arr.forEach((value, index) => {
+    const cell = document.createElement('div');
+    cell.className = 'cell';
+
+    const inside = left !== null && right !== null && index >= left && index <= right;
+    if (left !== null && right !== null) {
+      if (inside) cell.classList.add('active-range');
+      else cell.classList.add('outside');
+    }
+
+    if (index === step.pivotIndex) cell.classList.add('pivot');
+    if (index === step.iIndex) cell.classList.add('i-marker');
+    if (index === step.jIndex) cell.classList.add('j-marker');
+    if (step.swapIndices.includes(index)) cell.classList.add('swap-marker');
+
+    const idx = document.createElement('span');
+    idx.className = 'index';
+    idx.textContent = `índice ${index}`;
+
+    const val = document.createElement('span');
+    val.textContent = value;
+
+    const markers = document.createElement('div');
+    markers.className = 'markers';
+    if (index === step.pivotIndex) markers.appendChild(marker('P', 'p'));
+    if (index === step.iIndex) markers.appendChild(marker('i', 'i'));
+    if (index === step.jIndex) markers.appendChild(marker('j', 'j'));
+    if (step.swapIndices.includes(index)) markers.appendChild(marker('s', 's'));
+
+    cell.append(idx, val, markers);
+    arrayView.appendChild(cell);
+  });
+}
+
+function marker(text, cls) {
+  const element = document.createElement('span');
+  element.className = `marker ${cls}`;
+  element.textContent = text;
+  return element;
+}
+
+function renderStack(step) {
+  stackView.innerHTML = '';
+
+  if (step.stack.length === 0) {
+    stackView.innerHTML = '<div class="subtle-box">Pila vacía</div>';
+    return;
+  }
+
+  [...step.stack].reverse().forEach((frame, index) => {
+    const item = document.createElement('div');
+    item.className = 'stack-frame';
+    if (index === 0) item.classList.add('active');
+
+    item.innerHTML = `
+      <strong><span class="call-id">#${frame.id}</span>${frame.func}(${frame.left ?? ''}${frame.right !== null ? ', ' + frame.right : ''})${index === 0 ? ' ← activa' : ''}</strong>
+      <span>Origen: ${frame.origin}</span>
+      <span>Elementos: [${frame.values.join(', ')}]</span>
+    `;
+    stackView.appendChild(item);
+  });
+}
+
+function renderVars(step) {
+  varsView.innerHTML = '';
+
+  if (!step.stack.length) {
+    varsView.innerHTML = '<div class="subtle-box">No hay llamada activa.</div>';
+    return;
+  }
+
+  const frame = step.stack[step.stack.length - 1];
+  const rows = [];
+
+  Object.entries(frame.vars).forEach(([key, value]) => {
+    rows.push(`<tr><th>${key}</th><td>${value === null ? 'null' : value}</td></tr>`);
+  });
+
+  varsView.innerHTML = `
+    <div class="subtle-box">
+      <p><strong>Llamada #${frame.id}</strong> · ${frame.func}</p>
+      <table>${rows.join('')}</table>
+    </div>
+  `;
+}
+
+function renderSubarray(step) {
+  if (!step.stack.length) {
+    subarrayInfo.innerHTML = 'No hay subarreglo activo.';
+    return;
+  }
+
+  const frame = step.stack[step.stack.length - 1];
+  subarrayInfo.innerHTML = `
+    <p><strong>Llamada actual:</strong> #${frame.id}</p>
+    <p><strong>Función:</strong> ${frame.func}</p>
+    <p><strong>Rango:</strong> [${frame.left}, ${frame.right}]</p>
+    <p><strong>Elementos:</strong> [${frame.values.join(', ')}]</p>
+  `;
+}
+
+function renderRecursionTree(step) {
+  recursionTree.innerHTML = '';
+  if (!step.calls || step.calls.length === 0) {
+    recursionTree.innerHTML = '<div class="subtle-box">Todavía no se creó ninguna llamada.</div>';
+    return;
+  }
+  step.calls.forEach(call => {
+    const node = document.createElement('div');
+    node.className = 'tree-node';
+    if (call.id === step.activeCallId) node.classList.add('active');
+    if (call.status === 'returned') node.classList.add('returned');
+    node.style.marginLeft = `${call.depth * 28}px`;
+    const relation = call.parentId === null ? 'raíz' : `hija de #${call.parentId}`;
+    node.innerHTML = `
+      <div class="tree-title"><span class="tree-arrow">${call.depth ? '↳' : '●'}</span><span class="call-id">#${call.id}</span>${call.func}(${call.left ?? ''}${call.right !== null ? ', ' + call.right : ''})</div>
+      <span class="tree-meta">${relation} · ${call.origin} · elementos [${call.values.join(', ')}]</span>`;
+    recursionTree.appendChild(node);
+  });
+}
+
+function renderConditions(step) {
+  conditionsBody.innerHTML = '';
+  step.conditions.forEach(item => {
+    const row = document.createElement('tr');
+
+    const exp = document.createElement('td');
+    exp.textContent = item.expression;
+
+    const res = document.createElement('td');
+    res.textContent = item.result;
+    if (item.result === 'Verdadero' || item.result === 'Completado' || item.result === 'Invocación') {
+      res.className = 'ok';
+    } else if (item.result === 'Falso') {
+      res.className = 'bad';
+    }
+
+    const eff = document.createElement('td');
+    eff.textContent = item.effect;
+
+    row.append(exp, res, eff);
+    conditionsBody.appendChild(row);
+  });
+}
+
+function render() {
+  const step = steps[currentStep];
+  if (!step) return;
+
+  stepValue.textContent = `${currentStep + 1} / ${steps.length}`;
+  lineValue.textContent = step.line ?? '—';
+  callValue.textContent = step.activeCallId ? `#${step.activeCallId}` : '—';
+  pivotValue.textContent = step.activeVars.pivot ?? '—';
+  functionValue.textContent = step.activeFunction ?? '—';
+  badge.textContent = step.phase;
+  title.textContent = step.title;
+  message.textContent = step.message;
+  range.max = String(steps.length - 1);
+  range.value = String(currentStep);
+
+  renderCode(step);
+  renderArray(step);
+  renderStack(step);
+  renderVars(step);
+  renderSubarray(step);
+  renderRecursionTree(step);
+  renderConditions(step);
+
+  document.getElementById('first').disabled = currentStep === 0;
+  document.getElementById('prev').disabled = currentStep === 0;
+  document.getElementById('next').disabled = currentStep === steps.length - 1;
+  document.getElementById('last').disabled = currentStep === steps.length - 1;
+}
+
+function stopPlayback() {
+  if (playTimer) {
+    clearInterval(playTimer);
+    playTimer = null;
+  }
+  document.getElementById('play').textContent = 'Reproducir';
+}
+
+function generate() {
+  stopPlayback();
+  const values = input.value
+    .split(',')
+    .map(v => Number(v.trim()))
+    .filter(v => Number.isFinite(v));
+
+  if (!values.length) {
+    alert('Ingresa al menos un número válido.');
+    return;
+  }
+
+  if (values.length > 12) {
+    alert('Usa como máximo 12 elementos para que la simulación siga siendo clara.');
+    return;
+  }
+
+  createSimulatorSteps(values);
+  currentStep = 0;
+  render();
+}
+
+document.getElementById('generate').addEventListener('click', generate);
+document.getElementById('resetExample').addEventListener('click', () => {
+  input.value = '12, 13, 5, 6';
+  generate();
+});
+document.getElementById('first').addEventListener('click', () => {
+  stopPlayback();
+  currentStep = 0;
+  render();
+});
+document.getElementById('prev').addEventListener('click', () => {
+  stopPlayback();
+  currentStep = Math.max(0, currentStep - 1);
+  render();
+});
+document.getElementById('next').addEventListener('click', () => {
+  stopPlayback();
+  currentStep = Math.min(steps.length - 1, currentStep + 1);
+  render();
+});
+document.getElementById('last').addEventListener('click', () => {
+  stopPlayback();
+  currentStep = steps.length - 1;
+  render();
+});
+range.addEventListener('input', () => {
+  stopPlayback();
+  currentStep = Number(range.value);
+  render();
+});
+document.getElementById('play').addEventListener('click', () => {
+  if (playTimer) {
+    stopPlayback();
+    return;
+  }
+  if (currentStep === steps.length - 1) currentStep = 0;
+  document.getElementById('play').textContent = 'Pausar';
+  playTimer = setInterval(() => {
+    if (currentStep >= steps.length - 1) {
+      stopPlayback();
+      return;
+    }
+    currentStep++;
+    render();
+  }, 1300);
+});
+input.addEventListener('keydown', event => {
+  if (event.key === 'Enter') generate();
+});
+
+drawCode();
+generate();
+</script>
+</body>
+</html>

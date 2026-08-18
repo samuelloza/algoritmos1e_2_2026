@@ -1,17 +1,17 @@
 package week7;
 
-class Node<E> {
-    E data;
-    Node<E> next;
-
-    public Node(E data) {
-        this.data = data;
-    }
-}
-
 public class ListaSimples<T> {
     private Node<T> first;
     private Node<T> last;
+
+    private static class Node<E> {
+        E data;
+        Node<E> next;
+
+        public Node(E data) {
+            this.data = data;
+        }
+    }
 
     public ListaSimples() {
         first = null;
@@ -29,6 +29,18 @@ public class ListaSimples<T> {
             first = newNode;
             last = newNode;
         } else {
+            last.next = newNode;
+            last = newNode;
+        }
+    }
+
+    public void insertAndRemove(T data) {
+        Node<T> newNode = new Node<>(data);
+
+        if (isEmpty()) {
+            first = newNode;
+            last = newNode;
+        } else if (!last.data.equals(data)) {
             last.next = newNode;
             last = newNode;
         }
@@ -90,9 +102,13 @@ public class ListaSimples<T> {
 
     public static void main(String[] args) {
         ListaSimples<Integer> lista = new ListaSimples<>();
-        lista.insert(1);
-        lista.insert(2);
-        lista.insert(3);
+        lista.insertAndRemove(1);
+        lista.insertAndRemove(1);
+        lista.insertAndRemove(2);
+        lista.insertAndRemove(2);
+        lista.insertAndRemove(2);
+        lista.insertAndRemove(2);
+        lista.insertAndRemove(2);
 
         System.out.println("Show List");
         lista.showList();
@@ -111,5 +127,3 @@ public class ListaSimples<T> {
         lista.showList();
     }
 }
-
-

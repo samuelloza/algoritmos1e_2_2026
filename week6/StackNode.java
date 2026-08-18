@@ -1,18 +1,18 @@
 package week6;
 
-class Node<E> {
-    E data;
-    Node<E> next;
-
-    public Node(E data) {
-        this.data = data;
-    }
-}
-
 class StackNode<T> {
 
     public Node<T> top;
     public int size;
+
+    private static class Node<E> {
+        E data;
+        Node<E> next;
+
+        public Node(E data) {
+            this.data = data;
+        }
+    }
 
     public StackNode() {
         top = null;

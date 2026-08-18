@@ -1,10 +1,12 @@
 package week6;
 
-public class QueueNode<T> {
+import java.util.Scanner;
+
+public class Cf450A<T> {
     public Node<T> first;
     public Node<T> last;
     public int size;
-    
+
     private static class Node<E> {
         E data;
         Node<E> next;
@@ -14,7 +16,17 @@ public class QueueNode<T> {
         }
     }
 
-    public QueueNode() {
+    private static class Child {
+        int index;
+        int candies;
+
+        public Child(int index, int candies) {
+            this.candies = candies;
+            this.index = index;
+        }
+    }
+
+    public Cf450A() {
         first = null;
         last = null;
         size = 0;
@@ -62,26 +74,29 @@ public class QueueNode<T> {
     }
 
     public static void main(String[] args) {
-        QueueNode<Integer> queue = new QueueNode<Integer>();
-        queue.enqueue(1);
-        queue.enqueue(2);
-        queue.enqueue(3);
+        Scanner sc = new Scanner(System.in);
+        int n = sc.nextInt();
+        int m = sc.nextInt();
 
-        System.out.println(queue.peek());
-        queue.dequeue();
-        System.out.println(queue.peek());
-
-        System.out.println("__________");
-        queue.enqueue(4);
-
-        while (!queue.isEmpty()) {
-            System.out.println(queue.dequeue());
+        Cf450A<Child> queue = new Cf450A<>();
+        for (int i = 0; i < n; i++) {
+            int candies = sc.nextInt();
+            queue.enqueue(new Child(i + 1, candies));
         }
-        System.out.println("************");
-        queue.enqueue(10);
-        queue.enqueue(20);
 
-        queue.dequeue(); // saca el primer elemento que es 10
-        System.out.println(queue.peek());// Muestra el nuevo primer elemento que ahora es 20
+        int answer = -1;
+        while (!queue.isEmpty()) {
+            Child child = queue.dequeue();
+            child.candies = child.candies - m;
+
+            if (child.candies > 0) {
+                queue.enqueue(child);
+            } else {
+                answer = child.index;
+            }
+        }
+
+        System.out.println(answer);
+
     }
 }

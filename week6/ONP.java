@@ -2,19 +2,19 @@ package week6;
 
 import java.util.Scanner;
 
-class Node<E> {
-    E data;
-    Node<E> next;
-
-    public Node(E data) {
-        this.data = data;
-    }
-}
-
 class ONP<T> {
 
     public Node<T> top;
     public int size;
+
+    private static class Node<E> {
+        E data;
+        Node<E> next;
+
+        public Node(E data) {
+            this.data = data;
+        }
+    }
 
     public ONP() {
         top = null;
